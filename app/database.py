@@ -1,25 +1,26 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-import os
 
-# En local usa tus credenciales de PostgreSQL; en Render usa la variable de entorno DATABASE_URL
-SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://libreria_user:libreria_pass@localhost:5432/libreria_db"
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+
+if SQLALCHEMY_DATABASE_URL:
+    if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+else:
+    SQLALCHEMY_DATABASE_URL = "postgresql+psycopg2://libreria_user:libreria_pass@localhost:5432/libreria_db"
+
+# --- CAMBIO CLAVE AQUÍ ---
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,      # Verifica que la conexión esté viva antes de usarla
+    pool_recycle=300,        # Recicla conexiones cada 5 minutos (300 segundos)
 )
 
-# 1. Render a veces entrega "postgres://", SQLAlchemy espera "postgresql://"
-if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-# 2. FORZAR el driver psycopg2 (SQLAlchemy 2.1+ usa psycopg por defecto si no se especifica)
-if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
 
 def get_db():
     db = SessionLocal()
