@@ -44,7 +44,6 @@ async def login(
 def health():
     return {"status": "ok"}
 
-
 @app.get("/", include_in_schema=False)
 def root():
     return {"mensaje": "Bienvenido a la API de Librería Chiapas. Ve a /docs para la documentación."}

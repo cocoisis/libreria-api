@@ -8,9 +8,13 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql://libreria_user:libreria_pass@localhost:5432/libreria_db"
 )
 
-# Render a veces entrega "postgres://", SQLAlchemy necesita "postgresql://"
+# 1. Render a veces entrega "postgres://", SQLAlchemy espera "postgresql://"
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# 2. FORZAR el driver psycopg2 (SQLAlchemy 2.1+ usa psycopg por defecto si no se especifica)
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
